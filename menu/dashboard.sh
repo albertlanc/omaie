@@ -1,6 +1,6 @@
 #!/bin/bash
-MAG='\033[1;35m'; GRN='\033[1;32m'; CYN='\033[1;36m'; WHT='\033[1;37m'; NC='\033[0m'
-get_status() { systemctl is-active --quiet $1 && echo -e "${GRN}[OK]${NC}" || echo -e "\033[1;31m[OFF]${NC}"; }
+DGN='\033[0;32m'; LBL='\033[1;36m'; DWH='\033[0;37m'; LRD='\033[1;31m'; NC='\033[0m'
+get_status() { systemctl is-active --quiet $1 && echo -e "${DGN}[Running]${NC}" || echo -e "${LRD}[Offline]${NC}"; }
 
 show_dashboard() {
     clear
@@ -13,40 +13,41 @@ show_dashboard() {
     LOAD=$(cat /proc/loadavg | awk '{print $1}')
     DISK=$(df -h / | awk '/\// {print $5 " of " $2}')
 
-    echo -e "${GRN}System load:            ${WHT}$LOAD${NC}"
-    echo -e "${GRN}Usage of /:             ${WHT}$DISK${NC}"
-    echo -e "${GRN}Memory usage:           ${WHT}$RAM_P${NC}"
-    echo -e "${GRN}* Management:           ${WHT}SMARTKING4LUV v2 PRO${NC}"
-    echo -e "${GRN}* Support:              ${WHT}https://github.com/albertlanc${NC}\n"
+    echo -e "${DGN}System load:            ${LBL}$LOAD${NC}"
+    echo -e "${DGN}Usage of /:             ${LBL}$DISK${NC}"
+    echo -e "${DGN}Memory usage:           ${LBL}$RAM_P${NC}"
+    echo -e "${DGN}* Management:           ${DWH}SMARTKING4LUV v2 PRO${NC}"
+    echo -e "${DGN}* Support:              ${LBL}https://github.com/albertlanc${NC}\n"
 
-    echo -e "${MAG}┌─ SMARTKING4LUV V2 PRO (ELITE) ──────────────────────────┐${NC}"
-    echo -e "${MAG}│ ${GRN}Host : ${WHT}$HOSTNAME ($IP) ${NC}"
-    echo -e "${MAG}│ ${GRN}Up   : ${WHT}$UP ${NC}"
-    echo -e "${MAG}│ ${GRN}RAM  : ${WHT}[##--------] $RAM_P (${RAM_U}MB/${RAM_T}MB) ${NC}"
-    echo -e "${MAG}│ ${GRN}SVC  : ${WHT}Xray:$(get_status xray) SSH:$(get_status stunnel4) OVPN:$(get_status openvpn) WG:$(get_status wg-quick@wg0)${NC}"
-    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${DGN}┌─ ${DWH}SMARTKING4LUV V2 PRO (ELITE) ${DGN}──────────────────────────┐${NC}"
+    echo -e "${DGN}│ ${LRD}Host : ${DWH}$HOSTNAME ${LBL}($IP) ${NC}"
+    echo -e "${DGN}│ ${LRD}Up   : ${DWH}$UP ${NC}"
+    echo -e "${DGN}│ ${LRD}RAM  : ${DWH}[##--------] $RAM_P ${LBL}(${RAM_U}MB/${RAM_T}MB) ${NC}"
+    echo -e "${DGN}│ ${LRD}SVC  : ${DWH}Xray:$(get_status xray) SSH:$(get_status stunnel4) WG:$(get_status wg-quick@wg0)${NC}"
+    echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}\n"
 
-    echo -e "${MAG}┌─ PROTOCOL MANAGEMENT ───────────────────────────────────┐${NC}"
-    echo -e "${MAG}│ ${GRN}[01]${CYN} SSH, SSHWS & UDP Custom Manager                    ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[02]${CYN} OpenVPN Manager                                    ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[03]${CYN} Xray VLESS Manager                                 ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[04]${CYN} Xray VMESS Manager                                 ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[05]${CYN} Xray Trojan Manager                                ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[06]${CYN} Shadowsocks Manager                                ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[07]${CYN} WireGuard Manager                                  ${MAG}│${NC}"
-    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${DGN}┌─ ${DWH}PROTOCOL MANAGEMENT ${DGN}───────────────────────────────────┐${NC}"
+    echo -e "${DGN}│ ${LRD}[01]${LBL} SSH, SSHWS & UDP Custom Manager                    ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[02]${LBL} OpenVPN Manager                                    ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[03]${LBL} Xray VLESS Manager                                 ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[04]${LBL} Xray VMESS Manager                                 ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[05]${LBL} Xray Trojan Manager                                ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[06]${LBL} Shadowsocks Manager                                ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[07]${LBL} WireGuard Manager                                  ${DGN}│${NC}"
+    echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}\n"
 
-    echo -e "${MAG}┌─ SERVER & AUTOMATION ───────────────────────────────────┐${NC}"
-    echo -e "${MAG}│ ${GRN}[08]${CYN} SSL/TLS & Domain Manager                           ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[09]${CYN} Service & Port Manager                             ${MAG}│${NC}"
-    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${DGN}┌─ ${DWH}SERVER & AUTOMATION ${DGN}───────────────────────────────────┐${NC}"
+    echo -e "${DGN}│ ${LRD}[08]${LBL} SSL/TLS & Domain Manager                           ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[09]${LBL} Service & Port Manager                             ${DGN}│${NC}"
+    echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}\n"
 
-    echo -e "${MAG}┌─ DIAGNOSTICS & TOOLS ───────────────────────────────────┐${NC}"
-    echo -e "${MAG}│ ${GRN}[10]${CYN} Monitoring & Tools                                 ${MAG}│${NC}"
-    echo -e "${MAG}│ ${GRN}[11]${CYN} Uninstall System                                   ${MAG}│${NC}"
-    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${DGN}┌─ ${DWH}DIAGNOSTICS & TOOLS ${DGN}───────────────────────────────────┐${NC}"
+    echo -e "${DGN}│ ${LRD}[10]${LBL} Monitoring & Tools                                 ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[11]${LBL} Reboot System                                      ${DGN}│${NC}"
+    echo -e "${DGN}│ ${LRD}[12]${LBL} Uninstall System                                   ${DGN}│${NC}"
+    echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}\n"
 
-    echo -e "${MAG}┌─────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${MAG}│ ${GRN}[00]${CYN} Exit Dashboard                                     ${MAG}│${NC}"
-    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}"
+    echo -e "${DGN}┌─────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${DGN}│ ${LRD}[00]${LBL} Exit Dashboard                                     ${DGN}│${NC}"
+    echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}"
 }
