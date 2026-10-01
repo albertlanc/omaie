@@ -1,26 +1,52 @@
 #!/bin/bash
-get_status() { systemctl is-active --quiet $1 && echo -e "\033[0;32m[ON]\033[0m" || echo -e "\033[0;31m[OFF]\033[0m"; }
+MAG='\033[1;35m'; GRN='\033[1;32m'; CYN='\033[1;36m'; WHT='\033[1;37m'; NC='\033[0m'
+get_status() { systemctl is-active --quiet $1 && echo -e "${GRN}[OK]${NC}" || echo -e "\033[1;31m[OFF]${NC}"; }
+
 show_dashboard() {
     clear
-    UPTIME=$(uptime -p | cut -d " " -f 2-); RAM=$(free -m | awk '/Mem:/ { printf("%3.1f%%", $3/$2*100) }')
-    DOMAIN=$(cat /etc/smartking4luv/domain 2>/dev/null || echo "Not Set"); IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null)
+    UP=$(uptime -p | cut -d " " -f 2-)
+    RAM_P=$(free -m | awk '/Mem:/ { printf("%3.1f%%", $3/$2*100) }')
+    RAM_U=$(free -m | awk '/Mem:/ { print $3 }')
+    RAM_T=$(free -m | awk '/Mem:/ { print $2 }')
+    DOM=$(cat /etc/smartking4luv/domain 2>/dev/null || echo "Not Set")
+    IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null)
+    LOAD=$(cat /proc/loadavg | awk '{print $1}')
+    DISK=$(df -h / | awk '/\// {print $5 " of " $2}')
 
-    echo -e "\033[0;36m==============================================================\033[0m"
-    echo -e "\033[1;37m                 SMARTKING4LUV v2 PREMIUM UI                  \033[0m"
-    echo -e "\033[0;36m==============================================================\033[0m"
-    echo -e " \033[1;33mOS:\033[0m $HOSTNAME\n \033[1;33mIP:\033[0m $IP\n \033[1;33mDomain:\033[0m $DOMAIN\n \033[1;33mRAM:\033[0m $RAM         \033[1;33mUptime:\033[0m $UPTIME"
-    echo -e "\033[0;36m--------------------------------------------------------------\033[0m"
-    echo -e "\033[1;37m                       SERVICE STATUS                         \033[0m"
-    echo -e "\033[0;36m--------------------------------------------------------------\033[0m"
-    echo -e " SSH-WS: $(get_status stunnel4)     XRAY: $(get_status xray)        WG: $(get_status wg-quick@wg0)"
-    echo -e " OVPN: $(get_status openvpn)       HAPROXY: $(get_status haproxy)     SQUID: $(get_status squid)"
-    echo -e "\033[0;36m==============================================================\033[0m"
-    echo -e "\033[1;32m [1]\033[0m 🔐 SSH Manager               \033[1;32m [6]\033[0m 👻 Shadowsocks Manager"
-    echo -e "\033[1;32m [2]\033[0m 🌐 OpenVPN Manager           \033[1;32m [7]\033[0m 🛡️ WireGuard Manager"
-    echo -e "\033[1;32m [3]\033[0m 🚀 Xray VLESS Manager        \033[1;32m [8]\033[0m ⚙️ Domain & Port Manager"
-    echo -e "\033[1;32m [4]\033[0m 🚀 Xray VMESS Manager        \033[1;32m [9]\033[0m 📊 System Monitor"
-    echo -e "\033[1;32m [5]\033[0m 🚀 Xray Trojan Manager       \033[1;32m [10]\033[0m🗑️ Uninstall System"
-    echo -e "\033[0;36m--------------------------------------------------------------\033[0m"
-    echo -e "\033[1;31m [0]\033[0m ❌ Exit Dashboard"
-    echo -e "\033[0;36m==============================================================\033[0m"
+    echo -e "${GRN}System load:            ${WHT}$LOAD${NC}"
+    echo -e "${GRN}Usage of /:             ${WHT}$DISK${NC}"
+    echo -e "${GRN}Memory usage:           ${WHT}$RAM_P${NC}"
+    echo -e "${GRN}* Management:           ${WHT}SMARTKING4LUV v2 PRO${NC}"
+    echo -e "${GRN}* Support:              ${WHT}https://github.com/albertlanc${NC}\n"
+
+    echo -e "${MAG}┌─ SMARTKING4LUV V2 PRO (ELITE) ──────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}Host : ${WHT}$HOSTNAME ($IP) ${NC}"
+    echo -e "${MAG}│ ${GRN}Up   : ${WHT}$UP ${NC}"
+    echo -e "${MAG}│ ${GRN}RAM  : ${WHT}[##--------] $RAM_P (${RAM_U}MB/${RAM_T}MB) ${NC}"
+    echo -e "${MAG}│ ${GRN}SVC  : ${WHT}Xray:$(get_status xray) SSH:$(get_status stunnel4) OVPN:$(get_status openvpn) WG:$(get_status wg-quick@wg0)${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+
+    echo -e "${MAG}┌─ PROTOCOL MANAGEMENT ───────────────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}[01]${CYN} SSH, SSHWS & UDP Custom Manager                    ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[02]${CYN} OpenVPN Manager                                    ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[03]${CYN} Xray VLESS Manager                                 ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[04]${CYN} Xray VMESS Manager                                 ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[05]${CYN} Xray Trojan Manager                                ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[06]${CYN} Shadowsocks Manager                                ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[07]${CYN} WireGuard Manager                                  ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+
+    echo -e "${MAG}┌─ SERVER & AUTOMATION ───────────────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}[08]${CYN} SSL/TLS & Domain Manager                           ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[09]${CYN} Service & Port Manager                             ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+
+    echo -e "${MAG}┌─ DIAGNOSTICS & TOOLS ───────────────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}[10]${CYN} Monitoring & Tools                                 ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[11]${CYN} Uninstall System                                   ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+
+    echo -e "${MAG}┌─────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}[00]${CYN} Exit Dashboard                                     ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}"
 }

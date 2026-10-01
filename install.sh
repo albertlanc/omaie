@@ -8,9 +8,9 @@ source menu/monitor.sh; source menu/uninstall.sh; source menu/dashboard.sh
 check_license
 while true; do
     show_dashboard
-    read -p " Select Menu: " opt
+    read -p " Select an option [00-11]: " opt
     case $opt in
-        1) ssh_menu ;; 2) openvpn_menu ;; 3) vless_menu ;; 4) vmess_menu ;; 5) trojan_menu ;;
-        6) ss_menu ;; 7) wg_menu ;; 8) ssl_menu ;; 9) monitor_menu ;; 10) uninstall_menu ;; 0) clear; exit 0 ;;
+        01|1) ssh_menu ;; 02|2) openvpn_menu ;; 03|3) vless_menu ;; 04|4) vmess_menu ;; 05|5) trojan_menu ;;
+        06|6) ss_menu ;; 07|7) wg_menu ;; 08|8) ssl_menu ;; 09|9) port_menu ;; 10) monitor_menu ;; 11) uninstall_menu ;; 00|0) clear; exit 0 ;;
     esac
 done
