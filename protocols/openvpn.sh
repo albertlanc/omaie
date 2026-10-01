@@ -1,16 +1,33 @@
 #!/bin/bash
+MAG='\033[1;35m'; GRN='\033[1;32m'; CYN='\033[1;36m'; WHT='\033[1;37m'; NC='\033[0m'
+DB="/etc/smartking4luv/database.sqlite"; DOM=$(cat /etc/smartking4luv/domain 2>/dev/null)
+
 openvpn_menu() {
   while true; do
-    clear; echo -e "\033[0;36m==============================================================\n\033[1;37m                 OPENVPN MANAGER                              \033[0m\n\033[0;36m==============================================================\033[0m"
-    echo -e "\033[1;32m [1]\033[0m Create OpenVPN Account\n\033[1;32m [2]\033[0m Renew Account\n\033[1;32m [3]\033[0m Delete Account\n\033[0;36m--------------------------------------------------------------\033[0m\n\033[1;31m [0]\033[0m Back to Main Menu\n\033[0;36m==============================================================\033[0m"
-    read -p " Select: " opt
+    clear
+    echo -e "${MAG}┌─ PROTOCOL MANAGEMENT ───────────────────────────────────┐${NC}"
+    echo -e "${MAG}├── OPENVPN PROTOCOL MANAGER ─────────────────────────────┤${NC}"
+    echo -e "${MAG}│ ${GRN}[01]${CYN} Create OpenVPN User                                ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[02]${CYN} Create Trial OpenVPN User (24 Hours)               ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[03]${CYN} Delete OpenVPN User                                ${MAG}│${NC}"
+    echo -e "${MAG}│ ${GRN}[04]${CYN} Download / View .ovpn Config Link                  ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}\n"
+    echo -e "${MAG}┌─────────────────────────────────────────────────────────┐${NC}"
+    echo -e "${MAG}│ ${GRN}[00]${CYN} Back to Main Menu                                  ${MAG}│${NC}"
+    echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}"
+    read -p " Select an option [00-04]: " opt
     case $opt in
-      1) read -p " Username: " u; read -p " Password: " p; read -p " Days: " d
-         e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 /etc/smartking4luv/database.sqlite "INSERT INTO ssh_users (username, password, expiry, status) VALUES ('$u','$p','$e','ACTIVE');"
+      01|1) clear; read -p " Username: " u; read -p " Password: " p; read -p " Days: " d
+         e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 $DB "INSERT INTO ssh_users VALUES ('$u','$p','$e',10,1,'ACTIVE');"
          useradd -e "$e" -s /bin/false -M "$u" 2>/dev/null; echo "$u:$p" | chpasswd 2>/dev/null
-         echo -e "\n \033[1;32m[+] OpenVPN Account Created\033[0m\n Config: http://$(cat /etc/smartking4luv/domain):81/client.ovpn"; read -p " Enter..." ;;
-      0) return ;;
-      *) echo "WIP"; sleep 1 ;;
+         echo -e "\n ${GRN}[+] OpenVPN Account Created!${NC}\n ${CYN}Download Client Config: ${WHT}http://$DOM:81/client.ovpn${NC}"; read -p " Press Enter..." ;;
+      02|2) clear; u="ovpn_trial_$((RANDOM % 899 + 100))"; p=$((RANDOM % 8999 + 1000)); e=$(date -d "+1 day" +"%Y-%m-%d")
+         sqlite3 $DB "INSERT INTO ssh_users VALUES ('$u','$p','$e',1,1,'ACTIVE');"
+         useradd -e "$e" -s /bin/false -M "$u" 2>/dev/null; echo "$u:$p" | chpasswd 2>/dev/null
+         echo -e "\n ${GRN}[+] Trial Created: $u (Pass: $p)${NC}\n ${CYN}Config Link: ${WHT}http://$DOM:81/client.ovpn${NC}"; read -p " Press Enter..." ;;
+      03|3) clear; read -p " Username to delete: " u; userdel -f "$u" 2>/dev/null; sqlite3 $DB "DELETE FROM ssh_users WHERE username='$u'"; echo "Deleted"; read -p " Press Enter..." ;;
+      04|4) clear; echo -e " ${CYN}OpenVPN Download URL:${NC} ${WHT}http://$DOM:81/client.ovpn${NC}"; read -p " Press Enter..." ;;
+      00|0) return ;;
     esac
   done
 }
