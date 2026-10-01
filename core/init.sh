@@ -8,8 +8,8 @@ check_license() {
     IP=$(curl -sS ipv4.icanhazip.com)
     echo -e "[*] Verifying IP: $IP..."
     
-    # REAL BACKEND CHECK: Reads from your GitHub ips.txt file
-    if ! curl -sS https://raw.githubusercontent.com/albertlanc/omaie/main/ips.txt | grep -q "$IP"; then
+    # REAL BACKEND CHECK: Includes dynamic timestamp to bypass GitHub's 5-minute CDN cache
+    if ! curl -sS "https://raw.githubusercontent.com/albertlanc/omaie/main/ips.txt?t=$(date +%s)" | grep -q "$IP"; then
         echo -e "${RED}[!] IP $IP is not authorized in ips.txt! Access Denied.${NC}"; exit 1
     fi
     echo -e "${GREEN}[+] License Verified & Active.${NC}"
