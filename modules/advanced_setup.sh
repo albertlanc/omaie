@@ -15,18 +15,24 @@ SQUID
     cat << 'UDP' > /etc/systemd/system/badvpn.service
 [Unit]
 Description=UDP Custom Gateway
-After=network.target
 [Service]
-ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500 --max-connections-for-client 10
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500
 Restart=always
 [Install]
 WantedBy=multi-user.target
 UDP
     systemctl enable badvpn; systemctl start badvpn
 
-    echo "[*] Initializing WireGuard & OpenVPN structure..."
+    echo "[*] Initializing WireGuard configs..."
     mkdir -p /etc/wireguard
     if [ ! -f /etc/wireguard/privatekey ]; then
         wg genkey | tee /etc/wireguard/privatekey | wg pubkey > /etc/wireguard/publickey
     fi
+    cat << WG > /etc/wireguard/wg0.conf
+[Interface]
+PrivateKey = $(cat /etc/wireguard/privatekey)
+Address = 10.66.66.1/24
+ListenPort = 51820
+WG
+    systemctl enable --now wg-quick@wg0
 }
