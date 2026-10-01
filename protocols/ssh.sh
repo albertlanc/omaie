@@ -1,10 +1,11 @@
 #!/bin/bash
 DGN='\033[0;32m'; LBL='\033[1;36m'; DWH='\033[0;37m'; LRD='\033[1;31m'; WHT='\033[1;37m'; NC='\033[0m'
 DB="/etc/smartking4luv/database.sqlite"
-DOM=$(cat /etc/smartking4luv/domain 2>/dev/null); NS=$(cat /etc/smartking4luv/ns 2>/dev/null); IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null)
+# Dynamic DOM; NS=$(cat /etc/smartking4luv/ns 2>/dev/null); IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null)
 PUB=$(cat /etc/smartking4luv/slowdns_pub 2>/dev/null)
 
 print_account() {
+    DOM=$(cat /etc/smartking4luv/domain 2>/dev/null); NS=$(cat /etc/smartking4luv/ns 2>/dev/null); PUB=$(cat /etc/smartking4luv/slowdns_pub 2>/dev/null)
     clear
     UDP_PORT=$(grep -o "127.0.0.1:[0-9]*" /etc/systemd/system/badvpn.service 2>/dev/null | cut -d':' -f2 || echo "7300")
     echo -e "${DGN}┌─ ${DWH}ACCOUNT CREATED SUCCESSFULLY ${DGN}──────────────────────────┐${NC}"

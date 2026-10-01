@@ -1,8 +1,9 @@
 #!/bin/bash
 DGN='\033[0;32m'; WHT='\033[1;37m'; RED='\033[1;31m'; NC='\033[0m'
-DB="/etc/smartking4luv/database.sqlite"; DOM=$(cat /etc/smartking4luv/domain 2>/dev/null)
+DB="/etc/smartking4luv/database.sqlite"; # Dynamic DOM
 
 print_vless() {
+    local DOM=$(cat /etc/smartking4luv/domain 2>/dev/null)
     local u=$1; local id=$2; local e=$3
     clear
     echo -e "${DGN}┌─────────────────────────────────────────────────────────┐${NC}"
