@@ -15,10 +15,12 @@ ss_menu() {
     echo -e "${MAG}└─────────────────────────────────────────────────────────┘${NC}"
     read -p " Select: " opt
     case $opt in
-      01|1) clear; read -p " Username: " u; read -p " Days: " d; id=$(uuidgen); e=$(date -d "+$d days" +"%Y-%m-%d")
+      01|1) clear; echo -e "${MAG}┌─ CREATE SHADOWSOCKS ACCOUNT ────────────────────────────┐${NC}"
+         read -p " Username: " u; read -p " Days: " d; id=$(uuidgen); e=$(date -d "+$d days" +"%Y-%m-%d")
          sqlite3 $DB "INSERT INTO xray_users VALUES ('$u','$id','ss','$e');"
-         echo -e "\n ${GRN}[+] SS Account Created!${NC}\n Link: ss://$(echo -n "aes-128-gcm:$id" | base64 -w 0)@$DOM:10005#$u"; read -p " Press Enter..." ;;
-      02|2) clear; read -p " Username: " u; sqlite3 $DB "DELETE FROM xray_users WHERE username='$u'"; echo "Deleted"; read -p " Press Enter..." ;;
+         echo -e "\n ${GRN}[+] SS Account Created!${NC}\n ${CYN}Link:${NC} ${WHT}ss://$(echo -n "aes-128-gcm:$id" | base64 -w 0)@$DOM:10005#$u${NC}"; read -p " Press Enter..." ;;
+      02|2) clear; echo -e "${MAG}┌─ DELETE SHADOWSOCKS ACCOUNT ────────────────────────────┐${NC}"
+         read -p " Username: " u; sqlite3 $DB "DELETE FROM xray_users WHERE username='$u'"; echo " ${GRN}[-] Deleted${NC}"; read -p " Press Enter..." ;;
       00|0) return ;;
     esac
   done
