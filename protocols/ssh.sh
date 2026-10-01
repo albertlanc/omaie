@@ -1,31 +1,43 @@
 #!/bin/bash
-DB="/etc/smartking4luv/database.sqlite"; DOM=$(cat /etc/smartking4luv/domain 2>/dev/null); NS=$(cat /etc/smartking4luv/ns 2>/dev/null); IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null); PUB=$(cat /etc/smartking4luv/slowdns_pub 2>/dev/null)
+DB="/etc/smartking4luv/database.sqlite"; DOM=$(cat /etc/smartking4luv/domain 2>/dev/null); NS=$(cat /etc/smartking4luv/ns 2>/dev/null); IP=$(curl -sS ipv4.icanhazip.com 2>/dev/null)
+HLINE="\033[0;36m==============================================================\033[0m"
+SLINE="\033[0;36m--------------------------------------------------------------\033[0m"
+
 ssh_menu() {
   while true; do
-    clear; echo -e "\033[0;36m=== 🔐 SSH & OPENVPN MANAGER ===\033[0m"
-    echo -e "1. Create Account\n2. Renew Account\n3. Delete Account\n4. Lock/Unlock Account\n5. Account Stats\n0. Back"
-    read -p "Select: " opt
+    clear; echo -e "$HLINE\n\033[1;37m                 SSH & OPENVPN MANAGER                        \033[0m\n$HLINE"
+    echo -e "\033[1;32m [1]\033[0m Create Account\n\033[1;32m [2]\033[0m Renew Account\n\033[1;32m [3]\033[0m Delete Account\n\033[1;32m [4]\033[0m Lock/Unlock Account\n\033[1;32m [5]\033[0m Account Stats\n$SLINE\n\033[1;31m [0]\033[0m Back to Main Menu\n$HLINE"
+    read -p " Select: " opt
     case $opt in
-      1) clear; read -p "Username: " u; read -p "Password: " p; read -p "Days: " d; read -p "Max Logins: " m; read -p "Quota (GB): " q
+      1) clear; echo -e "$HLINE\n\033[1;37m                 CREATE SSH ACCOUNT                           \033[0m\n$HLINE"
+         read -p " Username: " u; read -p " Password: " p; read -p " Days: " d; read -p " Max Logins: " m; read -p " Quota (GB): " q
          e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 $DB "INSERT INTO ssh_users VALUES ('$u','$p','$e',$q,$m,'ACTIVE');"
-         useradd -e "$e" -s /bin/false -M "$u"; echo "$u:$p" | chpasswd
-         clear; echo -e "\033[1;32m=== ACCOUNT CREATED ===\033[0m\nUsername: $u\nPassword: $p\nExpiry: $e\nMax Login: $m\nData Quota: ${q}GB"
-         echo -e "Server IP: $IP\nDomain: $DOM\nName Server: $NS\n\n\033[1;33mSupported Ports:\033[0m\n- SSH-WS: 80 / 443\n- SSL/Stunnel: 444\n- Dropbear: 109\n- SlowDNS: 5300\n- Squid: 8080, 3128\n- BadVPN/UDPGW: 7300\n\n\033[1;33m[Payloads]\033[0m"
-         echo -e "WS/WSS: GET wss://$DOM/ HTTP/1.1[crlf]Host: $DOM[crlf]Upgrade: websocket[crlf][crlf]"
-         echo -e "SlowDNS: $DOM / $NS / $PUB\nOpenVPN: http://$DOM:81/client.ovpn\n"; read -p "Press Enter..." ;;
-      2) clear; echo -e "\033[1;33m--- Renew Account ---\033[0m\nActive Users:"; sqlite3 $DB "SELECT username, expiry FROM ssh_users;"
-         read -p "Username: " u; read -p "Add Days: " d; e=$(date -d "+$d days" +"%Y-%m-%d"); usermod -e "$e" "$u"
-         sqlite3 $DB "UPDATE ssh_users SET expiry='$e' WHERE username='$u'"; echo "Renewed to $e"; read -p "Enter..." ;;
-      3) clear; echo -e "\033[1;31m--- Delete Account ---\033[0m\nActive Users:"; sqlite3 $DB "SELECT username FROM ssh_users;"
-         read -p "Username: " u; userdel -f "$u"; sqlite3 $DB "DELETE FROM ssh_users WHERE username='$u'"; echo "Deleted"; read -p "Enter..." ;;
-      4) clear; echo -e "\033[1;34m--- Lock/Unlock ---\033[0m\nUser Status:"; sqlite3 $DB "SELECT username, status FROM ssh_users;"
-         read -p "Username: " u; read -p "Lock(L) or Unlock(U)?: " a
-         if [[ "$a" == "L" || "$a" == "l" ]]; then usermod -L "$u"; sqlite3 $DB "UPDATE ssh_users SET status='LOCKED' WHERE username='$u'"; echo "Locked"; fi
-         if [[ "$a" == "U" || "$a" == "u" ]]; then usermod -U "$u"; sqlite3 $DB "UPDATE ssh_users SET status='ACTIVE' WHERE username='$u'"; echo "Unlocked"; fi
-         read -p "Enter..." ;;
-      5) clear; echo -e "\033[1;36m--- SSH Stats ---\033[0m"
-         tot=$(sqlite3 $DB "SELECT count(*) FROM ssh_users;"); on=$(netstat -anp | grep ESTABLISHED | grep sshd | wc -l); off=$((tot - on))
-         echo -e "Total Accounts: $tot\nOnline Users: $on\nOffline Users: $off"; read -p "Enter..." ;;
+         useradd -e "$e" -s /bin/false -M "$u" 2>/dev/null; echo "$u:$p" | chpasswd 2>/dev/null
+         PUB=$(cat /etc/smartking4luv/slowdns_pub 2>/dev/null)
+         clear; echo -e "$HLINE\n\033[1;32m                 ACCOUNT CREATED SUCCESSFULLY                 \033[0m\n$HLINE"
+         echo -e " Username    : $u\n Password    : $p\n Expiry      : $e\n Max Login   : $m\n Data Quota  : ${q}GB\n Server IP   : $IP\n Domain      : $DOM\n Name Server : $NS"
+         echo -e "$SLINE\n\033[1;33m                      PAYLOADS & CONFIGS                      \033[0m\n$SLINE"
+         echo -e " \033[1;36m[WS/WSS Payload]\033[0m\n GET wss://$DOM/ HTTP/1.1[crlf]Host: $DOM[crlf]Upgrade: websocket[crlf][crlf]"
+         echo -e "\n \033[1;36m[SlowDNS Config]\033[0m\n $DOM / $NS / $PUB"
+         echo -e "\n \033[1;36m[OpenVPN Link]\033[0m\n http://$DOM:81/client.ovpn\n$HLINE"; read -p " Press Enter..." ;;
+      2) clear; echo -e "$HLINE\n\033[1;37m                 RENEW SSH ACCOUNT                            \033[0m\n$HLINE\n Active Users:"
+         sqlite3 $DB "SELECT username, expiry FROM ssh_users;" | column -t -s '|'; echo -e "$SLINE"
+         read -p " Username: " u; read -p " Add Days: " d; e=$(date -d "+$d days" +"%Y-%m-%d"); usermod -e "$e" "$u" 2>/dev/null
+         sqlite3 $DB "UPDATE ssh_users SET expiry='$e' WHERE username='$u'"; echo -e "\n \033[1;32m[+] Renewed to $e\033[0m"; read -p " Enter..." ;;
+      3) clear; echo -e "$HLINE\n\033[1;37m                 DELETE SSH ACCOUNT                           \033[0m\n$HLINE\n Active Users:"
+         sqlite3 $DB "SELECT username FROM ssh_users;" | column -t -s '|'; echo -e "$SLINE"
+         read -p " Username: " u; userdel -f "$u" 2>/dev/null; sqlite3 $DB "DELETE FROM ssh_users WHERE username='$u'"; echo -e "\n \033[1;31m[-] Deleted\033[0m"; read -p " Enter..." ;;
+      4) clear; echo -e "$HLINE\n\033[1;37m                 LOCK/UNLOCK ACCOUNT                          \033[0m\n$HLINE\n User Status:"
+         sqlite3 $DB "SELECT username, status FROM ssh_users;" | column -t -s '|'; echo -e "$SLINE"
+         read -p " Username: " u; read -p " Action (L=Lock / U=Unlock): " a
+         if [[ "$a" == "L" || "$a" == "l" ]]; then usermod -L "$u" 2>/dev/null; sqlite3 $DB "UPDATE ssh_users SET status='LOCKED' WHERE username='$u'"; echo -e "\n \033[1;31m[x] Locked\033[0m"; fi
+         if [[ "$a" == "U" || "$a" == "u" ]]; then usermod -U "$u" 2>/dev/null; sqlite3 $DB "UPDATE ssh_users SET status='ACTIVE' WHERE username='$u'"; echo -e "\n \033[1;32m[+] Unlocked\033[0m"; fi
+         read -p " Enter..." ;;
+      5) clear; echo -e "$HLINE\n\033[1;37m                 SSH ACCOUNT STATS                            \033[0m\n$HLINE"
+         tot=$(sqlite3 $DB "SELECT count(*) FROM ssh_users;")
+         on=$(netstat -anp 2>/dev/null | grep ESTABLISHED | grep sshd | wc -l)
+         off=$((tot - on))
+         echo -e " Total Accounts : $tot\n Online Users   : \033[1;32m$on\033[0m\n Offline Users  : \033[1;31m$off\033[0m\n$HLINE"; read -p " Press Enter..." ;;
       0) return ;;
     esac
   done
