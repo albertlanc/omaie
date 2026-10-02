@@ -33,7 +33,11 @@ STUN
     systemctl restart dropbear stunnel4
 
     echo "[*] Compiling DNSTT (SlowDNS)..."
-    wget -qO /usr/local/bin/dnstt-server https://github.com/Yukkiteru/dnstt/releases/latest/download/dnstt-server
+    apt-get install -y golang git
+    git clone https://www.bamsoftware.com/git/dnstt.git /root/dnstt_temp
+    cd /root/dnstt_temp/dnstt-server && go build
+    mv -f dnstt-server /usr/local/bin/dnstt-server
+    rm -rf /root/dnstt_temp
     chmod +x /usr/local/bin/dnstt-server
     mkdir -p /etc/slowdns
     /usr/local/bin/dnstt-server -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub
