@@ -1,3 +1,4 @@
+mkdir -p /etc/smartking4luv /etc/slowdns
 #!/bin/bash
 install_core_deps() {
     apt update -y
@@ -59,3 +60,7 @@ SRV
 iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300
 ufw allow 5300/udp 2>/dev/null
 iptables-save > /etc/iptables/rules.v4 2>/dev/null
+
+# Run the installation flow
+install_core_deps
+install_backend_engines
