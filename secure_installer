@@ -4,54 +4,60 @@ export DEBIAN_FRONTEND=noninteractive
 
 GITHUB_USER="albertlanc"
 REPO_NAME="omaie"
-# Use your personal access token to allow auto-appending new IPs to GitHub
 GITHUB_TOKEN="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"
 
 echo "=================================================="
-echo "      OMAIE VPN MULTIPLEXER INSTALLER v1.1        "
+echo "    OMAIE VPN MASTER DEPLOYMENT & LICENSING       "
 echo "=================================================="
 
-# 1. IP Detection & Auto-Licensing Check
+# 1. IP License Check & Auto-Whitelist
 echo "[*] Checking IP license authorization..."
 CLIENT_IP=$(curl -s https://api.ipify.org)
 echo "[*] Detected Server IP: $CLIENT_IP"
 
-# Fetch current licensed IPs from GitHub
 AUTHORIZED_IPS=$(curl -s "https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/licensed_ips.txt")
 
 if echo "$AUTHORIZED_IPS" | grep -qw "$CLIENT_IP"; then
     echo "[+] License Verified Successfully for IP: $CLIENT_IP"
 else
     echo "[-] IP not found in license list. Automatically adding IP ($CLIENT_IP) to GitHub..."
-    
-    # Fetch file SHA from GitHub API to update licensed_ips.txt
     FILE_INFO=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt")
     FILE_SHA=$(echo "$FILE_INFO" | grep -o '"sha": *"[^"]*"' | head -n 1 | cut -d'"' -f4)
-    
-    # Decode existing content, append new IP, encode back to base64
     EXISTING_CONTENT=$(echo "$FILE_INFO" | grep -o '"content": *"[^"]*"' | cut -d'"' -f4 | base64 -d 2>/dev/null || echo "$AUTHORIZED_IPS")
     NEW_CONTENT=$(echo -e "${EXISTING_CONTENT}\n${CLIENT_IP}" | sort -u | base64 -w 0)
     
-    # Push updated licensed_ips.txt back to GitHub via API
     curl -s -X PUT -H "Authorization: token ${GITHUB_TOKEN}" \
         -H "Content-Type: application/json" \
         "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt" \
-        -d "{\"message\":\"auto-license: add new client IP ${CLIENT_IP}\",\"content\":\"${NEW_CONTENT}\",\"sha\":\"${FILE_SHA}\",\"branch\":\"main\"}" > /dev/null
-    
+        -d "{\"message\":\"auto-license: add client IP ${CLIENT_IP}\",\"content\":\"${NEW_CONTENT}\",\"sha\":\"${FILE_SHA}\",\"branch\":\"main\"}" > /dev/null
     echo "[+] IP successfully whitelisted and licensed!"
 fi
 
-# 2. Prompt for Domain / Name Server
+# 2. Interactive Domain & Name Server Prompts
 echo ""
-read -p "Enter your Domain Name (or press Enter to use server IP): " USER_DOMAIN
+echo "--------------------------------------------------"
+read -p "Enter your Domain Name (e.g., vpn.yourdomain.com): " USER_DOMAIN
+read -p "Enter your Name Server / Cloudflare Subdomain (e.g., ns1.yourdomain.com): " USER_NS
+echo "--------------------------------------------------"
+
 if [ -z "$USER_DOMAIN" ]; then
     USER_DOMAIN="$CLIENT_IP"
 fi
-echo "[+] Target Domain/IP set to: $USER_DOMAIN"
+echo "[+] Target Domain set to: $USER_DOMAIN"
+echo "[+] Target Name Server set to: ${USER_NS:-N/A}"
 
-# 3. System Updates & Dependencies
-echo "[*] Installing core system packages and dependencies..."
-apt-get update -y
+# Save domain configs for backend reference
+mkdir -p /etc/omaie
+echo "DOMAIN=$USER_DOMAIN" > /etc/omaie/domain.conf
+echo "NS=$USER_NS" >> /etc/omaie/domain.conf
+
+# 3. Clean up any stuck apt/dpkg locks before installing dependencies
+echo "[*] Cleaning package locks and updating system..."
+pkill -f apt || true
+dpkg --configure -a
+apt-get update -y && apt-get --fix-broken install -y
+
+echo "[*] Installing core dependencies (nginx, certbot, python, etc.)..."
 apt-get install -y nginx sslh dropbear squid ufw git curl wget python3 wireguard wireguard-tools openvpn certbot socat net-tools
 
 # 4. Clone Repository Files
@@ -61,7 +67,7 @@ git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
 cd /root/omaie_client_install || { echo "[-] Failed to clone repository."; exit 1; }
 
 # 5. Firewall Configuration
-echo "[*] Configuring firewall rules and opening required ports..."
+echo "[*] Configuring firewall rules..."
 ufw allow 22/tcp
 ufw allow 80/tcp
 ufw allow 443/tcp
@@ -74,19 +80,29 @@ ufw allow 51820/udp
 ufw allow 7300/udp
 ufw --force enable || true
 
-# 6. Apply Configurations
+# 6. SSL Certificate Generation via Certbot
+if [[ "$USER_DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "[*] IP address provided instead of domain. Skipping Certbot SSL generation (using self-signed/HTTP fallback)."
+else
+    echo "[*] Requesting Let's Encrypt SSL Certificate for $USER_DOMAIN..."
+    systemctl stop nginx || true
+    certbot certonly --standalone --agree-tos --register-unsafely-without-email -d "$USER_DOMAIN" --non-interactive || echo "[-] Certbot automatic generation skipped or failed. Falling back to default certs."
+    systemctl start nginx || true
+fi
+
+# 7. Apply Configurations from Repository
 echo "[*] Applying Nginx, SSLH, and protocol configurations..."
 [ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
 [ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
 
-# 7. Restore Dashboard Menu
+# 8. Restore Dashboard Menu & Scripts
 echo "[*] Installing dashboard menu interface..."
 if [ -d "./menu" ]; then
     cp -r ./menu/* /usr/local/bin/ 2>/dev/null || cp -r ./menu/* /usr/bin/ 2>/dev/null
     chmod +x /usr/local/bin/* /usr/bin/* 2>/dev/null
 fi
 
-# 8. Enable & Start Services
+# 9. Enable & Start Services
 echo "[*] Starting and enabling all backend services..."
 systemctl daemon-reload
 systemctl restart nginx || true
@@ -98,7 +114,8 @@ systemctl enable --now wg-quick@wg0 2>/dev/null || true
 
 echo ""
 echo "=================================================="
-echo " [SUCCESS] DEPLOYMENT COMPLETED SUCCESSFULLY!"
-echo " Target Domain/IP: $USER_DOMAIN"
-echo " Type 'menu' in your terminal to view the dashboard."
+echo " [SUCCESS] FULL DEPLOYMENT COMPLETED!"
+echo " Domain: $USER_DOMAIN"
+echo " Name Server: ${USER_NS:-None}"
+echo " Type 'menu' in your terminal to manage your server."
 echo "=================================================="
