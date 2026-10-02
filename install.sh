@@ -109,10 +109,35 @@ touch /var/log/ws-proxy.log
 chmod 666 /var/log/ws-proxy.log
 
 # Force patch the dashboard protocol paths dynamically
-sed -i 's/"path":"\/xray"/"path":"\/vmess"/g' /root/smartking4luv-v2/protocols/vmess.sh 2>/dev/null
-sed -i 's/"path":"\/xray"/"path":"\/trojan"/g' /root/smartking4luv-v2/protocols/trojan.sh 2>/dev/null
+sed -i 's/"path":"\/xray"/"path":"\/vmess"/g' ./protocols/vmess.sh 2>/dev/null
+sed -i 's/"path":"\/xray"/"path":"\/trojan"/g' ./protocols/trojan.sh 2>/dev/null
 
 # Restart the service to apply the new proxy behavior
 systemctl restart ws-proxy
 echo "Multi-protocol fixes applied successfully."
+# ==========================================
+
+# ==========================================
+# DYNAMIC XRAY CONFIG FIX FOR FRESH VM
+# ==========================================
+echo "Patching Xray backend paths for VMess and Trojan..."
+python3 -c '
+import json, os
+conf_path = "/usr/local/etc/xray/config.json"
+if os.path.exists(conf_path):
+    try:
+        with open(conf_path, "r") as f:
+            data = json.load(f)
+        for ib in data.get("inbounds", []):
+            if ib.get("port") == 10002 and "streamSettings" in ib:
+                ib["streamSettings"]["wsSettings"]["path"] = "/vmess"
+            elif ib.get("port") == 10003 and "streamSettings" in ib:
+                ib["streamSettings"]["wsSettings"]["path"] = "/trojan"
+        with open(conf_path, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Failed to patch Xray config: {e}")
+'
+# Restart Xray to apply backend paths
+systemctl restart xray
 # ==========================================
