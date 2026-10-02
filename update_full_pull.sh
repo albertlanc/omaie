@@ -1,3 +1,7 @@
+REPO_DIR="/root/omaie"
+cd "$REPO_DIR" || exit 1
+
+cat << 'INSEOF' > scripts/install.sh
 #!/bin/bash
 CLIENT_IP=$(curl -s https://api.ipify.org)
 AUTHORIZED_IPS="https://raw.githubusercontent.com/albertlanc/omaie/main/licensed_ips.txt"
@@ -31,3 +35,16 @@ systemctl restart nginx
 systemctl restart sslh
 
 echo "[+] Installation complete! All protocols and multiplexers are fully deployed from repository."
+INSEOF
+
+chmod +x scripts/install.sh
+
+# Re-compile into the secure binary
+shc -f scripts/install.sh -o secure_installer
+rm -f scripts/install.sh.x.c
+
+# Push updates to GitHub
+git add -A
+git commit -m "feat: configure installer to clone entire omaie repository and apply all configs automatically"
+git push origin main
+echo "=== FULL-PULL SECURE INSTALLER COMMITTED AND PUSHED ==="
