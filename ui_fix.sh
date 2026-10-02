@@ -9,8 +9,8 @@ apt-get install -y net-tools >/dev/null 2>&1
 # 2. Fix Missing SlowDNS Key
 if [ ! -s /etc/smartking4luv/slowdns_pub ]; then
     echo "[*] Regenerating missing SlowDNS keys..."
-    /usr/local/bin/dnstt-server -gen > /etc/slowdns/keys.txt 2>/dev/null
-    grep "pubkey" /etc/slowdns/keys.txt | awk '{print $2}' > /etc/smartking4luv/slowdns_pub
+    /usr/local/bin/dnstt-server -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub
+    cat /etc/slowdns/server.pub > /etc/smartking4luv/slowdns_pub
 fi
 
 # 3. OVERHAUL SSH MANAGER UI

@@ -6,8 +6,8 @@ echo "[*] Forcing SlowDNS Key Generation..."
 wget -qO /usr/local/bin/dnstt-server "https://github.com/Yukkiteru/dnstt/releases/latest/download/dnstt-server"
 chmod +x /usr/local/bin/dnstt-server
 mkdir -p /etc/slowdns /etc/smartking4luv
-/usr/local/bin/dnstt-server -gen > /etc/slowdns/keys.txt 2>/dev/null
-grep "pubkey" /etc/slowdns/keys.txt | awk '{print $2}' > /etc/smartking4luv/slowdns_pub
+/usr/local/bin/dnstt-server -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub
+    cat /etc/slowdns/server.pub > /etc/smartking4luv/slowdns_pub
 
 # 2. SEPARATE PROTOCOL MANAGERS
 # --- OpenVPN Manager ---

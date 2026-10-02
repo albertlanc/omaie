@@ -5,8 +5,8 @@ rm -rf /opt/dnstt /usr/local/bin/dnstt-server
 git clone https://github.com/Yukkiteru/dnstt.git /opt/dnstt >/dev/null 2>&1
 cd /opt/dnstt/dnstt-server && go build -o /usr/local/bin/dnstt-server
 mkdir -p /etc/slowdns
-/usr/local/bin/dnstt-server -gen > /etc/slowdns/keys.txt
-grep "pubkey" /etc/slowdns/keys.txt | awk '{print $2}' > /etc/smartking4luv/slowdns_pub
+/usr/local/bin/dnstt-server -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub
+    cat /etc/slowdns/server.pub > /etc/smartking4luv/slowdns_pub
 systemctl restart client-dnstt || true
 
 echo -e "\033[1;33m[*] Initializing OpenVPN Backend...\033[0m"

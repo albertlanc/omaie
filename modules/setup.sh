@@ -36,17 +36,22 @@ STUN
     wget -qO /usr/local/bin/dnstt-server https://github.com/Yukkiteru/dnstt/releases/latest/download/dnstt-server
     chmod +x /usr/local/bin/dnstt-server
     mkdir -p /etc/slowdns
-    /usr/local/bin/dnstt-server -gen > /etc/slowdns/keys.txt
-    grep "pubkey" /etc/slowdns/keys.txt | awk '{print $2}' > /etc/smartking4luv/slowdns_pub
+    /usr/local/bin/dnstt-server -gen-key -privkey-file /etc/slowdns/server.key -pubkey-file /etc/slowdns/server.pub
+    cat /etc/slowdns/server.pub > /etc/smartking4luv/slowdns_pub
     
     cat << SRV > /etc/systemd/system/client-dnstt.service
 [Unit]
 Description=DNSTT Server
 [Service]
-ExecStart=/usr/local/bin/dnstt-server -udp :53 -privkey-file /etc/slowdns/server.key $(cat /etc/smartking4luv/domain) 127.0.0.1:22
+ExecStart=/usr/local/bin/dnstt-server -udp :5300 -privkey-file /etc/slowdns/server.key $(cat /etc/smartking4luv/domain) 127.0.0.1:22
 Restart=always
 [Install]
 WantedBy=multi-user.target
 SRV
     systemctl enable client-dnstt; systemctl start client-dnstt
 }
+
+# SlowDNS Ubuntu Port 53 Bypass (Forces traffic past systemd-resolved)
+iptables -t nat -I PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 5300
+ufw allow 5300/udp 2>/dev/null
+iptables-save > /etc/iptables/rules.v4 2>/dev/null
