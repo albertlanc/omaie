@@ -7,20 +7,18 @@ REPO_NAME="omaie"
 GITHUB_TOKEN="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"
 
 echo "=================================================="
-echo "    OMAIE VPN MASTER DEPLOYMENT & LICENSING       "
+echo "    OMAIE VPN ULTIMATE DEPLOYMENT & LICENSING     "
 echo "=================================================="
 
-# 1. IP License Check & Auto-Whitelist
-echo "[*] Checking IP license authorization..."
-CLIENT_IP=$(curl -s https://api.ipify.org)
-echo "[*] Detected Server IP: $CLIENT_IP"
-
+# 1. & 2. IP LICENSE CHECK & AUTO-WHITELIST
+echo "[*] Step 1: Checking IP license authorization..."
+CLIENT_IP=$(curl -s -4 https://api.ipify.org)
 AUTHORIZED_IPS=$(curl -s "https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/licensed_ips.txt")
 
 if echo "$AUTHORIZED_IPS" | grep -qw "$CLIENT_IP"; then
     echo "[+] License Verified Successfully for IP: $CLIENT_IP"
 else
-    echo "[-] IP not found in license list. Automatically adding IP ($CLIENT_IP) to GitHub..."
+    echo "[-] IP not licensed. Automatically adding IP ($CLIENT_IP) to GitHub..."
     FILE_INFO=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt")
     FILE_SHA=$(echo "$FILE_INFO" | grep -o '"sha": *"[^"]*"' | head -n 1 | cut -d'"' -f4)
     EXISTING_CONTENT=$(echo "$FILE_INFO" | grep -o '"content": *"[^"]*"' | cut -d'"' -f4 | base64 -d 2>/dev/null || echo "$AUTHORIZED_IPS")
@@ -30,92 +28,87 @@ else
         -H "Content-Type: application/json" \
         "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt" \
         -d "{\"message\":\"auto-license: add client IP ${CLIENT_IP}\",\"content\":\"${NEW_CONTENT}\",\"sha\":\"${FILE_SHA}\",\"branch\":\"main\"}" > /dev/null
-    echo "[+] IP successfully whitelisted and licensed!"
 fi
 
-# 2. Interactive Domain & Name Server Prompts
+# 3. VERIFY IPv4/IPv6 & SYSTEM DEPENDENCIES
+echo "[*] Step 2: Configuring IPv4/IPv6 and installing dependencies..."
+sysctl -w net.ipv4.ip_forward=1 > /dev/null
+sysctl -w net.ipv6.conf.all.forwarding=1 > /dev/null
+sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
+sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf
+sysctl -p > /dev/null
+
+pkill -f apt || true
+dpkg --configure -a || true
+apt-get update -y && apt-get --fix-broken install -y
+
+# Added stunnel4, unzip, and cron to the dependency list
+apt-get install -y nginx libnginx-mod-stream docker.io docker-compose sslh dropbear stunnel4 squid ufw git curl wget python3 wireguard openvpn certbot socat jq unzip cron
+
+# 4. DOMAIN, NAME SERVER & CERTIFICATE
 echo ""
-echo "--------------------------------------------------"
-read -p "Enter your Domain Name (e.g., vpn.yourdomain.com): " USER_DOMAIN
-read -p "Enter your Name Server / Cloudflare Subdomain (e.g., ns1.yourdomain.com): " USER_NS
-echo "--------------------------------------------------"
+read -p "Enter Domain Name (e.g., vpn.yourdomain.com): " USER_DOMAIN
+read -p "Enter Name Server (e.g., ns1.yourdomain.com): " USER_NS
+[ -z "$USER_DOMAIN" ] && USER_DOMAIN="$CLIENT_IP"
 
-if [ -z "$USER_DOMAIN" ]; then
-    USER_DOMAIN="$CLIENT_IP"
-fi
-echo "[+] Target Domain set to: $USER_DOMAIN"
-echo "[+] Target Name Server set to: ${USER_NS:-N/A}"
-
-# Save domain configs for backend reference
 mkdir -p /etc/omaie
 echo "DOMAIN=$USER_DOMAIN" > /etc/omaie/domain.conf
 echo "NS=$USER_NS" >> /etc/omaie/domain.conf
 
-# 3. Clean up any stuck apt/dpkg locks before installing dependencies
-echo "[*] Cleaning package locks and updating system..."
-pkill -f apt || true
-dpkg --configure -a
-apt-get update -y && apt-get --fix-broken install -y
-
-echo "[*] Installing core dependencies (nginx, certbot, python, etc.)..."
-apt-get install -y nginx sslh dropbear squid ufw git curl wget python3 wireguard wireguard-tools openvpn certbot socat net-tools
-
-# 4. Clone Repository Files
-echo "[*] Cloning full configuration stack from GitHub..."
-rm -rf /root/omaie_client_install
-git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
-cd /root/omaie_client_install || { echo "[-] Failed to clone repository."; exit 1; }
-
-# 5. Firewall Configuration
-echo "[*] Configuring firewall rules..."
-ufw allow 22/tcp
-ufw allow 80/tcp
-ufw allow 443/tcp
-ufw allow 109/tcp
-ufw allow 444/tcp
-ufw allow 53/udp
-ufw allow 1194/udp
-ufw allow 3128/tcp
-ufw allow 51820/udp
-ufw allow 7300/udp
-ufw --force enable || true
-
-# 6. SSL Certificate Generation via Certbot
-if [[ "$USER_DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    echo "[*] IP address provided instead of domain. Skipping Certbot SSL generation (using self-signed/HTTP fallback)."
-else
-    echo "[*] Requesting Let's Encrypt SSL Certificate for $USER_DOMAIN..."
+if [[ ! "$USER_DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo "[*] Step 3: Requesting SSL Certificate for $USER_DOMAIN..."
     systemctl stop nginx || true
-    certbot certonly --standalone --agree-tos --register-unsafely-without-email -d "$USER_DOMAIN" --non-interactive || echo "[-] Certbot automatic generation skipped or failed. Falling back to default certs."
+    certbot certonly --standalone --agree-tos --register-unsafely-without-email -d "$USER_DOMAIN" --non-interactive || true
     systemctl start nginx || true
 fi
 
-# 7. Apply Configurations from Repository
-echo "[*] Applying Nginx, SSLH, and protocol configurations..."
+# 5. CORE BACKEND ENGINES (XRAY & UDP CUSTOM)
+echo "[*] Step 4: Installing Xray Core and UDP Custom binaries..."
+bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || true
+wget -qO /usr/local/bin/udp-custom "https://raw.githubusercontent.com/netkito/UDP-Custom/main/udp-custom-linux-amd64" || true
+chmod +x /usr/local/bin/udp-custom 2>/dev/null || true
+systemctl enable --now docker
+
+# 6. CLONE GIT & APPLY ALL CONFIGS
+echo "[*] Step 5: Pulling protocol files from GitHub..."
+rm -rf /root/omaie_client_install
+git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
+cd /root/omaie_client_install || exit 1
+
+echo "[*] Applying Nginx, SSLH, Systemd Services, and Proxy Scripts..."
 [ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
 [ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
+[ -d "./configs/systemd" ] && cp -r ./configs/systemd/* /etc/systemd/system/
+[ -d "./configs/udp-custom" ] && mkdir -p /etc/udp-custom && cp -r ./configs/udp-custom/* /etc/udp-custom/
+[ -f "./scripts/ws-proxy.py" ] && cp ./scripts/ws-proxy.py /usr/local/bin/ && chmod +x /usr/local/bin/ws-proxy.py
 
-# 8. Restore Dashboard Menu & Scripts
-echo "[*] Installing dashboard menu interface..."
-if [ -d "./menu" ]; then
-    cp -r ./menu/* /usr/local/bin/ 2>/dev/null || cp -r ./menu/* /usr/bin/ 2>/dev/null
-    chmod +x /usr/local/bin/* /usr/bin/* 2>/dev/null
+# 7. SLOWDNS PACKAGE & PUBKEY
+echo "[*] Step 6: Installing SlowDNS and Generating Keys..."
+mkdir -p /etc/slowdns
+cd /etc/slowdns
+wget -qO dnstt-server "https://github.com/XIU2/dnstt/releases/download/v1.1.1/dnstt-server-linux-amd64-1.1.1.tar.gz" && tar -xzf dnstt-server-linux-amd64-1.1.1.tar.gz -C /etc/slowdns/ || true
+chmod +x /etc/slowdns/dnstt-server 2>/dev/null || true
+
+if [ -f "/etc/slowdns/dnstt-server" ]; then
+    /etc/slowdns/dnstt-server -gen > keys.txt 2>/dev/null
+    PUBKEY=$(grep -oP '(?<=Pub: ).*' keys.txt)
+    echo "SLOWDNS_PUB=$PUBKEY" >> /etc/omaie/domain.conf
+    echo -e "\033[1;32m[+] SLOWDNS PUBLIC KEY: $PUBKEY\033[0m"
 fi
 
-# 9. Enable & Start Services
-echo "[*] Starting and enabling all backend services..."
-systemctl daemon-reload
-systemctl restart nginx || true
-systemctl restart sslh || true
-systemctl restart dropbear || true
-systemctl restart squid || true
-systemctl restart openvpn || true
-systemctl enable --now wg-quick@wg0 2>/dev/null || true
+# 8. START SERVICES & DASHBOARD
+echo "[*] Step 7: Finalizing Services..."
+cd /root/omaie_client_install
+if [ -d "./menu" ]; then
+    cp -r ./menu/* /usr/local/bin/ 2>/dev/null || true
+    chmod +x /usr/local/bin/* 2>/dev/null || true
+fi
 
-echo ""
+systemctl daemon-reload
+systemctl enable --now ws-proxy-custom udp-custom xray stunnel4 2>/dev/null || true
+systemctl restart nginx sslh dropbear stunnel4 ws-proxy-custom udp-custom xray || true
+
 echo "=================================================="
-echo " [SUCCESS] FULL DEPLOYMENT COMPLETED!"
+echo " [SUCCESS] ULTIMATE DEPLOYMENT COMPLETED!"
 echo " Domain: $USER_DOMAIN"
-echo " Name Server: ${USER_NS:-None}"
-echo " Type 'menu' in your terminal to manage your server."
 echo "=================================================="
