@@ -2,22 +2,43 @@
 set -e
 export DEBIAN_FRONTEND=noninteractive
 
+GITHUB_USER="albertlanc"
+REPO_NAME="omaie"
+# Use your personal access token to allow auto-appending new IPs to GitHub
+GITHUB_TOKEN="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"
+
 echo "=================================================="
-echo "      OMAIE VPN MULTIPLEXER INSTALLER v1.0        "
+echo "      OMAIE VPN MULTIPLEXER INSTALLER v1.1        "
 echo "=================================================="
 
-# 1. IP License Check
+# 1. IP Detection & Auto-Licensing Check
 echo "[*] Checking IP license authorization..."
 CLIENT_IP=$(curl -s https://api.ipify.org)
 echo "[*] Detected Server IP: $CLIENT_IP"
 
-AUTHORIZED_IPS=$(curl -s https://raw.githubusercontent.com/albertlanc/omaie/main/licensed_ips.txt)
+# Fetch current licensed IPs from GitHub
+AUTHORIZED_IPS=$(curl -s "https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/licensed_ips.txt")
 
 if echo "$AUTHORIZED_IPS" | grep -qw "$CLIENT_IP"; then
     echo "[+] License Verified Successfully for IP: $CLIENT_IP"
 else
-    echo "[-] Access Denied! Your IP ($CLIENT_IP) is not licensed to run this script."
-    exit 1
+    echo "[-] IP not found in license list. Automatically adding IP ($CLIENT_IP) to GitHub..."
+    
+    # Fetch file SHA from GitHub API to update licensed_ips.txt
+    FILE_INFO=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt")
+    FILE_SHA=$(echo "$FILE_INFO" | grep -o '"sha": *"[^"]*"' | head -n 1 | cut -d'"' -f4)
+    
+    # Decode existing content, append new IP, encode back to base64
+    EXISTING_CONTENT=$(echo "$FILE_INFO" | grep -o '"content": *"[^"]*"' | cut -d'"' -f4 | base64 -d 2>/dev/null || echo "$AUTHORIZED_IPS")
+    NEW_CONTENT=$(echo -e "${EXISTING_CONTENT}\n${CLIENT_IP}" | sort -u | base64 -w 0)
+    
+    # Push updated licensed_ips.txt back to GitHub via API
+    curl -s -X PUT -H "Authorization: token ${GITHUB_TOKEN}" \
+        -H "Content-Type: application/json" \
+        "https://api.github.com/repos/${GITHUB_USER}/${REPO_NAME}/contents/licensed_ips.txt" \
+        -d "{\"message\":\"auto-license: add new client IP ${CLIENT_IP}\",\"content\":\"${NEW_CONTENT}\",\"sha\":\"${FILE_SHA}\",\"branch\":\"main\"}" > /dev/null
+    
+    echo "[+] IP successfully whitelisted and licensed!"
 fi
 
 # 2. Prompt for Domain / Name Server
@@ -37,7 +58,7 @@ apt-get install -y nginx sslh dropbear squid ufw git curl wget python3 wireguard
 echo "[*] Cloning full configuration stack from GitHub..."
 rm -rf /root/omaie_client_install
 git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
-cd /root/omaie_client_install || exit 1
+cd /root/omaie_client_install || { echo "[-] Failed to clone repository."; exit 1; }
 
 # 5. Firewall Configuration
 echo "[*] Configuring firewall rules and opening required ports..."
