@@ -14,7 +14,7 @@ print_trojan() {
     echo -e "  ${RED}Expiry   : ${WHT}$e"
     echo -e "${DGN}├─────────────────────────────────────────────────────────┤${NC}"
     echo -e "  ${RED}[TLS / Port 443]${NC}"
-    echo -e "  ${WHT}trojan://$id@$DOM:443?path=/xray&security=tls&type=ws#$u${NC}"
+    echo -e "  ${WHT}trojan://$id@$DOM:443?path=/trojan&security=tls&type=ws#$u${NC}"
     echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}"
     read -p " Press Enter to return..."
 }

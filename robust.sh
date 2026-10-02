@@ -15,7 +15,7 @@ ssh_menu() {
          e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 $DB "INSERT INTO ssh_users VALUES ('$u','$p','$e',$q,$m,'ACTIVE');"
          useradd -e "$e" -s /bin/false -M "$u"; echo "$u:$p" | chpasswd
          clear; echo -e "\033[1;32m=== ACCOUNT CREATED ===\033[0m\nUsername: $u\nPassword: $p\nExpiry: $e\nMax Login: $m\nData Quota: ${q}GB"
-         echo -e "Server IP: $IP\nDomain: $DOM\nName Server: $NS\n\n\033[1;33mSupported Ports:\033[0m\n- SSH-WS: 80 / 443\n- SSL/Stunnel: 444\n- Dropbear: 109\n- SlowDNS: 5300\n- Squid: 8080, 3128\n- BadVPN/UDPGW: 7300\n\n\033[1;33m[Payloads]\033[0m"
+         echo -e "Server IP: $IP\nDomain: $DOM\nName Server: $NS\n\n\033[1;33mSupported Ports:\033[0m\n- SSH-WS: 80 / 443\n- SSL/Stunnel: 444\n- Dropbear: 109\n- SlowDNS: 53\n- Squid: 8080, 3128\n- BadVPN/UDPGW: 7300\n\n\033[1;33m[Payloads]\033[0m"
          echo -e "WS/WSS: GET wss://$DOM/ HTTP/1.1[crlf]Host: $DOM[crlf]Upgrade: websocket[crlf][crlf]"
          echo -e "SlowDNS: $DOM / $NS / $PUB\nOpenVPN: http://$DOM:81/client.ovpn\n"; read -p "Press Enter..." ;;
       2) clear; echo -e "\033[1;33m--- Renew Account ---\033[0m\nActive Users:"; sqlite3 $DB "SELECT username, expiry FROM ssh_users;"
@@ -50,9 +50,9 @@ xray_menu() {
       1) clear; read -p "Protocol (vless/vmess/trojan/ss): " pr; read -p "Username: " u; read -p "Days: " d
          id=$(uuidgen); e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 $DB "INSERT INTO xray_users VALUES ('$u','$id','$pr','$e');"
          clear; echo -e "\033[1;32m=== $pr ACCOUNT CREATED ===\033[0m\nUser: $u | UUID: $id | Expiry: $e\n\033[1;33m[Payload Links]\033[0m"
-         if [ "$pr" == "vless" ]; then echo -e "TLS (443): vless://$id@$DOM:443?path=/xray&security=tls&encryption=none&type=ws#$u\nNon-TLS (80): vless://$id@$DOM:80?path=/xray&security=none&encryption=none&type=ws#$u"; fi
+         if [ "$pr" == "vless" ]; then echo -e "TLS (443): vless://$id@$DOM:443?path=/vmess&security=tls&encryption=none&type=ws#$u\nNon-TLS (80): vless://$id@$DOM:80?path=/vmess&security=none&encryption=none&type=ws#$u"; fi
          if [ "$pr" == "vmess" ]; then echo -e "VMess WS: vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"$u\",\"add\":\"$DOM\",\"port\":\"443\",\"id\":\"$id\",\"net\":\"ws\",\"path\":\"/xray\",\"tls\":\"tls\"}" | base64 -w 0)"; fi
-         if [ "$pr" == "trojan" ]; then echo -e "Trojan TLS: trojan://$id@$DOM:443?path=/xray&security=tls&type=ws#$u"; fi
+         if [ "$pr" == "trojan" ]; then echo -e "Trojan TLS: trojan://$id@$DOM:443?path=/vmess&security=tls&type=ws#$u"; fi
          if [ "$pr" == "ss" ]; then echo -e "Shadowsocks SR: ss://$(echo -n "aes-128-gcm:$id" | base64 -w 0)@$DOM:10005#$u"; fi
          read -p "Enter..." ;;
       2) clear; echo "Xray Accounts:"; sqlite3 $DB "SELECT username, protocol, expiry FROM xray_users;"; read -p "User to Renew: " u; read -p "Add Days: " d

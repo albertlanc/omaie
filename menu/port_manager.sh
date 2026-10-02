@@ -29,7 +29,7 @@ port_menu() {
     P_WG=$(grep -oP "(?<=ListenPort = )[0-9]+" /etc/wireguard/wg0.conf 2>/dev/null || echo "51820")
     P_SQUID=$(grep -oP "(?<=http_port )[0-9]+" /etc/squid/squid.conf 2>/dev/null | head -n1 || echo "8080")
     P_OVPN=$(grep -oP "(?<=port )[0-9]+" /etc/openvpn/server/server.conf 2>/dev/null || grep -oP "(?<=port )[0-9]+" /etc/openvpn/server.conf 2>/dev/null || echo "1194")
-    P_DNSTT=$(grep -oP "(?<=-udp :)[0-9]+" /etc/systemd/system/client-dnstt.service 2>/dev/null || echo "5300")
+    P_DNSTT=$(grep -oP "(?<=-udp :)[0-9]+" /etc/systemd/system/client-dnstt.service 2>/dev/null || echo "53")
     P_HAP=$(grep -oP "(?<=bind \*:)[0-9]+" /etc/haproxy/haproxy.cfg 2>/dev/null | grep -v "80" | head -n1 || echo "443")
     P_SS=$(grep -oP "(?<=\"port\": )[0-9]+" /usr/local/etc/xray/config.json 2>/dev/null | tail -n1 || echo "10005")
 

@@ -71,7 +71,7 @@ ssl_menu() {
 Description=DNSTT Server
 After=network.target
 [Service]
-ExecStart=/usr/local/bin/dnstt-server -udp :5300 -privkey-file /etc/slowdns/server.key $NEW_DOM 127.0.0.1:22
+ExecStart=/usr/local/bin/dnstt-server -udp :53 -privkey-file /etc/slowdns/server.key $NEW_DOM 127.0.0.1:22
 Restart=always
 [Install]
 WantedBy=multi-user.target

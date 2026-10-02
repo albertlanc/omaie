@@ -14,9 +14,9 @@ xray_menu() {
          id=$(uuidgen); e=$(date -d "+$d days" +"%Y-%m-%d"); sqlite3 $DB "INSERT INTO xray_users VALUES ('$u','$id','$pr','$e');"
          clear; echo -e "$HLINE\n\033[1;32m                 ACCOUNT CREATED SUCCESSFULLY                 \033[0m\n$HLINE"
          echo -e " Username : $u\n UUID     : $id\n Protocol : ${pr^^}\n Expiry   : $e\n$SLINE\n\033[1;33m                      PAYLOAD LINKS                           \033[0m\n$SLINE"
-         if [ "$pr" == "vless" ]; then echo -e " \033[1;36m[TLS - 443]\033[0m\n vless://$id@$DOM:443?path=/xray&security=tls&encryption=none&type=ws#$u\n\n \033[1;36m[Non-TLS - 80]\033[0m\n vless://$id@$DOM:80?path=/xray&security=none&encryption=none&type=ws#$u"; fi
+         if [ "$pr" == "vless" ]; then echo -e " \033[1;36m[TLS - 443]\033[0m\n vless://$id@$DOM:443?path=/vmess&security=tls&encryption=none&type=ws#$u\n\n \033[1;36m[Non-TLS - 80]\033[0m\n vless://$id@$DOM:80?path=/vmess&security=none&encryption=none&type=ws#$u"; fi
          if [ "$pr" == "vmess" ]; then echo -e " \033[1;36m[VMess WS]\033[0m\n vmess://$(echo -n "{\"v\":\"2\",\"ps\":\"$u\",\"add\":\"$DOM\",\"port\":\"443\",\"id\":\"$id\",\"net\":\"ws\",\"path\":\"/xray\",\"tls\":\"tls\"}" | base64 -w 0)"; fi
-         if [ "$pr" == "trojan" ]; then echo -e " \033[1;36m[Trojan TLS]\033[0m\n trojan://$id@$DOM:443?path=/xray&security=tls&type=ws#$u"; fi
+         if [ "$pr" == "trojan" ]; then echo -e " \033[1;36m[Trojan TLS]\033[0m\n trojan://$id@$DOM:443?path=/vmess&security=tls&type=ws#$u"; fi
          if [ "$pr" == "ss" ]; then echo -e " \033[1;36m[Shadowsocks SR]\033[0m\n ss://$(echo -n "aes-128-gcm:$id" | base64 -w 0)@$DOM:10005#$u"; fi
          echo -e "$HLINE"; read -p " Press Enter..." ;;
       2) clear; echo -e "$HLINE\n\033[1;37m                 RENEW XRAY ACCOUNT                           \033[0m\n$HLINE\n Active Accounts:"

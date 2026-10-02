@@ -22,7 +22,7 @@ show_services() {
     P_WG=$(grep -oP "(?<=ListenPort = )[0-9]+" /etc/wireguard/wg0.conf 2>/dev/null || echo "51820")
     P_SQUID=$(grep -oP "(?<=http_port )[0-9]+" /etc/squid/squid.conf 2>/dev/null | head -n1 || echo "8080")
     P_OVPN=$(grep -oP "(?<=port )[0-9]+" /etc/openvpn/server/server.conf 2>/dev/null || echo "1194")
-    P_DNSTT=$(grep -oP "(?<=-udp :)[0-9]+" /etc/systemd/system/client-dnstt.service 2>/dev/null || echo "5300")
+    P_DNSTT=$(grep -oP "(?<=-udp :)[0-9]+" /etc/systemd/system/dnstt-server.service 2>/dev/null || echo "53")
     P_HAP=$(grep -oP "(?<=bind \*:)[0-9]+" /etc/haproxy/haproxy.cfg 2>/dev/null | grep -v "80" | head -n1 || echo "443")
     
     check_svc "OpenSSH" "sshd" "22"
@@ -30,11 +30,15 @@ show_services() {
     check_svc "Stunnel4 (SSL)" "stunnel4" "$P_STUN"
     check_svc "Squid Proxy" "squid" "$P_SQUID"
     check_svc "UDP Custom" "badvpn" "$P_UDP"
-    check_svc "SlowDNS (DNSTT)" "client-dnstt" "$P_DNSTT"
+    check_svc "SlowDNS (DNSTT)" "dnstt" "$P_DNSTT"
+    P_HAP=$(ss -tulpn 2>/dev/null | grep -w "haproxy" | awk '{print $5}' | rev | cut -d: -f1 | rev | sort -nu | paste -sd, -)
+    [ -z "$P_HAP" ] && P_HAP="80, 443"
     check_svc "HAProxy (Mux)" "haproxy" "$P_HAP"
     check_svc "WireGuard" "wg-quick@wg0" "$P_WG"
     check_svc "OpenVPN" "openvpn" "$P_OVPN"
-    check_svc "Xray Core" "xray" "$P_HAP"
+    P_XRAY=$(ss -tulpn 2>/dev/null | grep -w "xray" | awk '{print $5}' | rev | cut -d: -f1 | rev | sort -nu | head -n 3 | paste -sd, -)
+    [ -z "$P_XRAY" ] && P_XRAY="443, 80"
+    check_svc "Xray Core" "xray" "$P_XRAY"
     
     echo -e "${DGN}└─────────────────────────────────────────────────────────┘${NC}"
     read -p " Press Enter to return..."
