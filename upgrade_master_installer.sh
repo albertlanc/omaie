@@ -1,3 +1,7 @@
+REPO_DIR="/root/omaie"
+cd "$REPO_DIR" || exit 1
+
+cat << 'INSEOF' > scripts/install.sh
 #!/bin/bash
 
 # 1. IP LICENSE CHECK
@@ -82,3 +86,16 @@ echo " [SUCCESS] FULL DEPLOYMENT COMPLETED SUCCESSFULLY!"
 echo " Target Domain/IP: $USER_DOMAIN"
 echo " Type 'menu' to access your server control panel."
 echo "=================================================="
+INSEOF
+
+chmod +x scripts/install.sh
+
+# Re-compile into the secure binary
+shc -f scripts/install.sh -o secure_installer
+rm -f scripts/install.sh.x.c
+
+# Push updates to GitHub
+git add -A
+git commit -m "feat: upgrade master installer to fully configure domain, certs, dependencies, ports, protocols, and dashboard"
+git push origin main
+echo "=== MASTER INSTALLER UPDATED AND PUSHED TO GITHUB ==="
