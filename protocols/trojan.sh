@@ -66,3 +66,5 @@ trojan_menu() {
     esac
   done
 }
+
+trojan_menu

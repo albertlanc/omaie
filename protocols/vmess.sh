@@ -70,3 +70,5 @@ vmess_menu() {
     esac
   done
 }
+
+vmess_menu

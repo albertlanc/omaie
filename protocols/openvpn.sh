@@ -62,3 +62,5 @@ openvpn_menu() {
     esac
   done
 }
+
+openvpn_menu

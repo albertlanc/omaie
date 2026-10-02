@@ -24,7 +24,7 @@ port_menu() {
     clear
     # Fetch live ports directly from configuration files
     P_DROP=$(grep -oP "(?<=DROPBEAR_PORT=)[0-9]+" /etc/default/dropbear 2>/dev/null || echo "109")
-    P_UDP=$(grep -o "127.0.0.1:[0-9]*" /etc/systemd/system/badvpn.service 2>/dev/null | cut -d':' -f2 || echo "7300")
+    P_UDP=$(grep -o "127.0.0.1:[0-9]*" /etc/systemd/system/badvpn.service 2>/dev/null | cut -d':' -f2 || echo "udp-custom")
     P_STUN=$(grep -oP "(?<=accept = )[0-9]+" /etc/stunnel/stunnel.conf 2>/dev/null || echo "444")
     P_WG=$(grep -oP "(?<=ListenPort = )[0-9]+" /etc/wireguard/wg0.conf 2>/dev/null || echo "51820")
     P_SQUID=$(grep -oP "(?<=http_port )[0-9]+" /etc/squid/squid.conf 2>/dev/null | head -n1 || echo "8080")
@@ -76,3 +76,5 @@ port_menu() {
     esac
   done
 }
+
+port_menu

@@ -68,3 +68,5 @@ vless_menu() {
     esac
   done
 }
+
+vless_menu

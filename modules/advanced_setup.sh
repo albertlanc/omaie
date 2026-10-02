@@ -16,7 +16,7 @@ SQUID
 [Unit]
 Description=UDP Custom Gateway
 [Service]
-ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500
+ExecStart=/usr/local/bin/badvpn-udpgw --listen-addr 127.0.0.1:1-65535, 53, 5300 --max-clients 500
 Restart=always
 [Install]
 WantedBy=multi-user.target

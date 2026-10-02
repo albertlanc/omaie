@@ -50,3 +50,5 @@ ss_menu() {
     esac
   done
 }
+
+ss_menu

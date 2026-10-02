@@ -116,3 +116,5 @@ OVPNCLI
     esac
   done
 }
+
+ssl_menu

@@ -16,3 +16,5 @@ uninstall_menu() {
     echo -e " ${DGN}[+] Uninstallation Complete. Goodbye.${NC}"; exit 0
   fi
 }
+
+uninstall_menu

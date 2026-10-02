@@ -26,3 +26,5 @@ wg_menu() {
     esac
   done
 }
+
+wg_menu
