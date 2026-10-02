@@ -11,14 +11,12 @@ echo "[*] Checking IP license authorization..."
 CLIENT_IP=$(curl -s https://api.ipify.org)
 echo "[*] Detected Server IP: $CLIENT_IP"
 
-# Fetch authorized IPs from GitHub repo
 AUTHORIZED_IPS=$(curl -s https://raw.githubusercontent.com/albertlanc/omaie/main/licensed_ips.txt)
 
 if echo "$AUTHORIZED_IPS" | grep -qw "$CLIENT_IP"; then
     echo "[+] License Verified Successfully for IP: $CLIENT_IP"
 else
     echo "[-] Access Denied! Your IP ($CLIENT_IP) is not licensed to run this script."
-    echo "[-] Please add your IP to 'licensed_ips.txt' in your GitHub repository."
     exit 1
 fi
 
@@ -39,7 +37,7 @@ apt-get install -y nginx sslh dropbear squid ufw git curl wget python3 wireguard
 echo "[*] Cloning full configuration stack from GitHub..."
 rm -rf /root/omaie_client_install
 git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
-cd /root/omaie_client_install || { echo "[-] Failed to clone repository."; exit 1; }
+cd /root/omaie_client_install || exit 1
 
 # 5. Firewall Configuration
 echo "[*] Configuring firewall rules and opening required ports..."
@@ -55,7 +53,7 @@ ufw allow 51820/udp
 ufw allow 7300/udp
 ufw --force enable || true
 
-# 6. Apply Configurations from Repository
+# 6. Apply Configurations
 echo "[*] Applying Nginx, SSLH, and protocol configurations..."
 [ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
 [ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
