@@ -38,11 +38,18 @@ sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf
 sysctl -p > /dev/null
 
+# --- CRITICAL FIX FOR NGINX DPKG CRASH ---
+echo "[*] Injecting temporary Nginx config to bypass dpkg locks..."
+mkdir -p /etc/nginx
+[ -f /etc/nginx/nginx.conf ] && mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak 2>/dev/null || true
+# Provide absolute bare minimum config to pass 'nginx -t' during installation
+echo -e "events {\n    worker_connections 1024;\n}" > /etc/nginx/nginx.conf
+
 pkill -f apt || true
 dpkg --configure -a || true
 apt-get update -y && apt-get --fix-broken install -y
 
-# Added stunnel4, unzip, and cron to the dependency list
+# Now install everything cleanly without Nginx crashing
 apt-get install -y nginx libnginx-mod-stream docker.io docker-compose sslh dropbear stunnel4 squid ufw git curl wget python3 wireguard openvpn certbot socat jq unzip cron
 
 # 4. DOMAIN, NAME SERVER & CERTIFICATE
@@ -67,7 +74,7 @@ echo "[*] Step 4: Installing Xray Core and UDP Custom binaries..."
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || true
 wget -qO /usr/local/bin/udp-custom "https://raw.githubusercontent.com/netkito/UDP-Custom/main/udp-custom-linux-amd64" || true
 chmod +x /usr/local/bin/udp-custom 2>/dev/null || true
-systemctl enable --now docker
+systemctl enable --now docker || true
 
 # 6. CLONE GIT & APPLY ALL CONFIGS
 echo "[*] Step 5: Pulling protocol files from GitHub..."
@@ -76,6 +83,7 @@ git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
 cd /root/omaie_client_install || exit 1
 
 echo "[*] Applying Nginx, SSLH, Systemd Services, and Proxy Scripts..."
+# This step overwrites the temporary dummy nginx.conf with your REAL one from the repo!
 [ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
 [ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
 [ -d "./configs/systemd" ] && cp -r ./configs/systemd/* /etc/systemd/system/
