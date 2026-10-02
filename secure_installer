@@ -10,7 +10,7 @@ echo "=================================================="
 echo "    OMAIE VPN ULTIMATE DEPLOYMENT & LICENSING     "
 echo "=================================================="
 
-# 1. & 2. IP LICENSE CHECK & AUTO-WHITELIST
+# 1. IP LICENSE CHECK & AUTO-WHITELIST
 echo "[*] Step 1: Checking IP license authorization..."
 CLIENT_IP=$(curl -s -4 https://api.ipify.org)
 AUTHORIZED_IPS=$(curl -s "https://raw.githubusercontent.com/${GITHUB_USER}/${REPO_NAME}/main/licensed_ips.txt")
@@ -30,7 +30,7 @@ else
         -d "{\"message\":\"auto-license: add client IP ${CLIENT_IP}\",\"content\":\"${NEW_CONTENT}\",\"sha\":\"${FILE_SHA}\",\"branch\":\"main\"}" > /dev/null
 fi
 
-# 3. VERIFY IPv4/IPv6 & SYSTEM DEPENDENCIES
+# 2. VERIFY IPv4/IPv6 & SYSTEM DEPENDENCIES
 echo "[*] Step 2: Configuring IPv4/IPv6 and installing dependencies..."
 sysctl -w net.ipv4.ip_forward=1 > /dev/null
 sysctl -w net.ipv6.conf.all.forwarding=1 > /dev/null
@@ -38,21 +38,23 @@ sed -i 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/g' /etc/sysctl.conf
 sed -i 's/#net.ipv6.conf.all.forwarding=1/net.ipv6.conf.all.forwarding=1/g' /etc/sysctl.conf
 sysctl -p > /dev/null
 
-# --- CRITICAL FIX FOR NGINX DPKG CRASH ---
 echo "[*] Injecting temporary Nginx config to bypass dpkg locks..."
 mkdir -p /etc/nginx
 [ -f /etc/nginx/nginx.conf ] && mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak 2>/dev/null || true
-# Provide absolute bare minimum config to pass 'nginx -t' during installation
 echo -e "events {\n    worker_connections 1024;\n}" > /etc/nginx/nginx.conf
 
 pkill -f apt || true
 dpkg --configure -a || true
 apt-get update -y && apt-get --fix-broken install -y
 
-# Now install everything cleanly without Nginx crashing
+# --- CRITICAL FIX FOR DOCKER CONFLICT ---
+echo "[*] Resolving Docker and Containerd dependency conflicts..."
+apt-get remove -y docker docker-engine docker.io containerd runc containerd.io 2>/dev/null || true
+
+echo "[*] Installing core dependencies..."
 apt-get install -y nginx libnginx-mod-stream docker.io docker-compose sslh dropbear stunnel4 squid ufw git curl wget python3 wireguard openvpn certbot socat jq unzip cron
 
-# 4. DOMAIN, NAME SERVER & CERTIFICATE
+# 3. DOMAIN, NAME SERVER & CERTIFICATE
 echo ""
 read -p "Enter Domain Name (e.g., vpn.yourdomain.com): " USER_DOMAIN
 read -p "Enter Name Server (e.g., ns1.yourdomain.com): " USER_NS
@@ -69,28 +71,27 @@ if [[ ! "$USER_DOMAIN" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
     systemctl start nginx || true
 fi
 
-# 5. CORE BACKEND ENGINES (XRAY & UDP CUSTOM)
+# 4. CORE BACKEND ENGINES
 echo "[*] Step 4: Installing Xray Core and UDP Custom binaries..."
 bash -c "$(curl -L https://github.com/XTLS/Xray-install/raw/main/install-release.sh)" @ install || true
 wget -qO /usr/local/bin/udp-custom "https://raw.githubusercontent.com/netkito/UDP-Custom/main/udp-custom-linux-amd64" || true
 chmod +x /usr/local/bin/udp-custom 2>/dev/null || true
 systemctl enable --now docker || true
 
-# 6. CLONE GIT & APPLY ALL CONFIGS
+# 5. CLONE GIT & APPLY ALL CONFIGS
 echo "[*] Step 5: Pulling protocol files from GitHub..."
 rm -rf /root/omaie_client_install
 git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
 cd /root/omaie_client_install || exit 1
 
-echo "[*] Applying Nginx, SSLH, Systemd Services, and Proxy Scripts..."
-# This step overwrites the temporary dummy nginx.conf with your REAL one from the repo!
+echo "[*] Applying Configurations..."
 [ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
 [ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
 [ -d "./configs/systemd" ] && cp -r ./configs/systemd/* /etc/systemd/system/
 [ -d "./configs/udp-custom" ] && mkdir -p /etc/udp-custom && cp -r ./configs/udp-custom/* /etc/udp-custom/
 [ -f "./scripts/ws-proxy.py" ] && cp ./scripts/ws-proxy.py /usr/local/bin/ && chmod +x /usr/local/bin/ws-proxy.py
 
-# 7. SLOWDNS PACKAGE & PUBKEY
+# 6. SLOWDNS PACKAGE & PUBKEY
 echo "[*] Step 6: Installing SlowDNS and Generating Keys..."
 mkdir -p /etc/slowdns
 cd /etc/slowdns
@@ -104,7 +105,7 @@ if [ -f "/etc/slowdns/dnstt-server" ]; then
     echo -e "\033[1;32m[+] SLOWDNS PUBLIC KEY: $PUBKEY\033[0m"
 fi
 
-# 8. START SERVICES & DASHBOARD
+# 7. START SERVICES & DASHBOARD
 echo "[*] Step 7: Finalizing Services..."
 cd /root/omaie_client_install
 if [ -d "./menu" ]; then
@@ -118,5 +119,4 @@ systemctl restart nginx sslh dropbear stunnel4 ws-proxy-custom udp-custom xray |
 
 echo "=================================================="
 echo " [SUCCESS] ULTIMATE DEPLOYMENT COMPLETED!"
-echo " Domain: $USER_DOMAIN"
 echo "=================================================="
