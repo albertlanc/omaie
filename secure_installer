@@ -1,6 +1,85 @@
 #!/bin/bash
-# Secure Obfuscated Runner for Omaie Stack
-PAYLOAD="IyEvYmluL2Jhc2gKZXhwb3J0IERFQklBTl9GUk9OVEVORD1ub25pbnRlcmFjdGl2ZQoKIyBJUCBMaWNlbnNlIENoZWNrCkNMSUVOVF9JUD0kKGN1cmwgLXMgaHR0cHM6Ly9hcGkuaXBpZnkub3JnKQpBVVRIT1JJWkVEX0lQUz0iaHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2FsYmVydGxhbmMvb21haWUvbWFpbi9saWNlbnNlZF9pcHMudHh0IgoKaWYgISBjdXJsIC1zICIkQVVUSE9SSVpFRF9JUFMiIHwgZ3JlcCAtcXcgIiRDTElFTlRfSVAiOyB0aGVuCiAgICBlY2hvICJbLV0gQWNjZXNzIERlbmllZCEgWW91ciBJUCAoJENMSUVOVF9JUCkgaXMgbm90IGxpY2Vuc2VkIHRvIHJ1biB0aGlzIHNjcmlwdC4iCiAgICBleGl0IDEKZmkKCmVjaG8gIlsrXSBMaWNlbnNlIFZlcmlmaWVkIGZvciBJUDogJENMSUVOVF9JUCIKZWNobyAiWytdIFN0YXJ0aW5nIGNvbXBsZXRlIHNlcnZlciBkZXBsb3ltZW50Li4uIgoKcmVhZCAtcCAiRW50ZXIgeW91ciBEb21haW4gTmFtZSAob3IgcHJlc3MgRW50ZXIgdG8gdXNlIHNlcnZlciBJUCk6ICIgVVNFUl9ET01BSU4KaWYgWyAteiAiJFVTRVJfRE9NQUlOIiBdOyB0aGVuCiAgICBVU0VSX0RPTUFJTj0kKGN1cmwgLXMgaHR0cHM6Ly9hcGkuaXBpZnkub3JnKQpmaQoKZWNobyAiWytdIEluc3RhbGxpbmcgY29yZSBwYWNrYWdlcy4uLiIKYXB0LWdldCB1cGRhdGUgLXkKYXB0LWdldCBpbnN0YWxsIC15IG5naW54IHNzbGggZHJvcGJlYXIgc3F1aWQgdWZ3IGdpdCBjdXJsIHdnZXQgcHl0aG9uMyB3aXJlZ3VhcmQgd2lyZWd1YXJkLXRvb2xzIG9wZW52cG4gY2VydGJvdCBzb2NhdCBuZXQtdG9vbHMKCmVjaG8gIlsrXSBDbG9uaW5nIGZ1bGwgY29uZmlndXJhdGlvbiBzdGFjay4uLiIKcm0gLXJmIC9yb290L29tYWllX2NsaWVudF9pbnN0YWxsCmdpdCBjbG9uZSBodHRwczovL2dpdGh1Yi5jb20vYWxiZXJ0bGFuYy9vbWFpZS5naXQgL3Jvb3Qvb21haWVfY2xpZW50X2luc3RhbGwKY2QgL3Jvb3Qvb21haWVfY2xpZW50X2luc3RhbGwgfHwgZXhpdCAxCgplY2hvICJbK10gQ29uZmlndXJpbmcgbmV0d29yayBydWxlcy4uLiIKdWZ3IGFsbG93IDIyL3RjcAp1ZncgYWxsb3cgODAvdGNwCnVmdyBhbGxvdyA0NDMvdGNwCnVmdyBhbGxvdyAxMDkvdGNwCnVmdyBhbGxvdyA0NDQvdGNwCnVmdyBhbGxvdyA1My91ZHAKdWZ3IGFsbG93IDExOTQvdWRwCnVmdyBhbGxvdyAzMTI4L3RjcAp1ZncgYWxsb3cgNTE4MjAvdWRwCnVmdyBhbGxvdyA3MzAwL3VkcAp1ZncgLS1mb3JjZSBlbmFibGUKCmVjaG8gIlsrXSBBcHBseWluZyBtdWx0aXBsZXhlciBjb25maWd1cmF0aW9ucy4uLiIKWyAtZCAiLi9jb25maWdzL25naW54IiBdICYmIGNwIC1yIC4vY29uZmlncy9uZ2lueC8qIC9ldGMvbmdpbngvClsgLWYgIi4vY29uZmlncy9zc2xoL3NzbGgiIF0gJiYgY3AgLi9jb25maWdzL3NzbGgvc3NsaCAvZXRjL2RlZmF1bHQvc3NsaAoKZWNobyAiWytdIFNldHRpbmcgdXAgc2VydmljZXMuLi4iCnN5c3RlbWN0bCBkYWVtb24tcmVsb2FkCnN5c3RlbWN0bCByZXN0YXJ0IG5naW54CnN5c3RlbWN0bCByZXN0YXJ0IHNzbGgKc3lzdGVtY3RsIHJlc3RhcnQgZHJvcGJlYXIKc3lzdGVtY3RsIHJlc3RhcnQgc3F1aWQKc3lzdGVtY3RsIHJlc3RhcnQgb3BlbnZwbgpzeXN0ZW1jdGwgZW5hYmxlIC0tbm93IHdnLXF1aWNrQHdnMCAyPi9kZXYvbnVsbCB8fCB0cnVlCgplY2hvICI9PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PSIKZWNobyAiIFtTVUNDRVNTXSBGVUxMIERFUExPWU1FTlQgQ09NUExFVEVEIFNVQ0NFU1NGVUxMWSEiCmVjaG8gIiBUYXJnZXQgRG9tYWluL0lQOiAkVVNFUl9ET01BSU4iCmVjaG8gIj09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09Igo="
-echo "$PAYLOAD" | base64 -d > /tmp/omaie_install_exec.sh
-bash /tmp/omaie_install_exec.sh
-rm -f /tmp/omaie_install_exec.sh
+set -e
+export DEBIAN_FRONTEND=noninteractive
+
+echo "=================================================="
+echo "      OMAIE VPN MULTIPLEXER INSTALLER v1.0        "
+echo "=================================================="
+
+# 1. IP License Check
+echo "[*] Checking IP license authorization..."
+CLIENT_IP=$(curl -s https://api.ipify.org)
+echo "[*] Detected Server IP: $CLIENT_IP"
+
+# Fetch authorized IPs from GitHub repo
+AUTHORIZED_IPS=$(curl -s https://raw.githubusercontent.com/albertlanc/omaie/main/licensed_ips.txt)
+
+if echo "$AUTHORIZED_IPS" | grep -qw "$CLIENT_IP"; then
+    echo "[+] License Verified Successfully for IP: $CLIENT_IP"
+else
+    echo "[-] Access Denied! Your IP ($CLIENT_IP) is not licensed to run this script."
+    echo "[-] Please add your IP to 'licensed_ips.txt' in your GitHub repository."
+    exit 1
+fi
+
+# 2. Prompt for Domain / Name Server
+echo ""
+read -p "Enter your Domain Name (or press Enter to use server IP): " USER_DOMAIN
+if [ -z "$USER_DOMAIN" ]; then
+    USER_DOMAIN="$CLIENT_IP"
+fi
+echo "[+] Target Domain/IP set to: $USER_DOMAIN"
+
+# 3. System Updates & Dependencies
+echo "[*] Installing core system packages and dependencies..."
+apt-get update -y
+apt-get install -y nginx sslh dropbear squid ufw git curl wget python3 wireguard wireguard-tools openvpn certbot socat net-tools
+
+# 4. Clone Repository Files
+echo "[*] Cloning full configuration stack from GitHub..."
+rm -rf /root/omaie_client_install
+git clone https://github.com/albertlanc/omaie.git /root/omaie_client_install
+cd /root/omaie_client_install || { echo "[-] Failed to clone repository."; exit 1; }
+
+# 5. Firewall Configuration
+echo "[*] Configuring firewall rules and opening required ports..."
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 109/tcp
+ufw allow 444/tcp
+ufw allow 53/udp
+ufw allow 1194/udp
+ufw allow 3128/tcp
+ufw allow 51820/udp
+ufw allow 7300/udp
+ufw --force enable || true
+
+# 6. Apply Configurations from Repository
+echo "[*] Applying Nginx, SSLH, and protocol configurations..."
+[ -d "./configs/nginx" ] && cp -r ./configs/nginx/* /etc/nginx/
+[ -f "./configs/sslh/sslh" ] && cp ./configs/sslh/sslh /etc/default/sslh
+
+# 7. Restore Dashboard Menu
+echo "[*] Installing dashboard menu interface..."
+if [ -d "./menu" ]; then
+    cp -r ./menu/* /usr/local/bin/ 2>/dev/null || cp -r ./menu/* /usr/bin/ 2>/dev/null
+    chmod +x /usr/local/bin/* /usr/bin/* 2>/dev/null
+fi
+
+# 8. Enable & Start Services
+echo "[*] Starting and enabling all backend services..."
+systemctl daemon-reload
+systemctl restart nginx || true
+systemctl restart sslh || true
+systemctl restart dropbear || true
+systemctl restart squid || true
+systemctl restart openvpn || true
+systemctl enable --now wg-quick@wg0 2>/dev/null || true
+
+echo ""
+echo "=================================================="
+echo " [SUCCESS] DEPLOYMENT COMPLETED SUCCESSFULLY!"
+echo " Target Domain/IP: $USER_DOMAIN"
+echo " Type 'menu' in your terminal to view the dashboard."
+echo "=================================================="
